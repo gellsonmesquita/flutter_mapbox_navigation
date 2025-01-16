@@ -63,7 +63,7 @@ class FlutterMapboxNavigationPlugin : FlutterPlugin, MethodCallHandler,
         var enableFreeDriveMode = false
         var mapStyleUrlDay: String? = null
         var mapStyleUrlNight: String? = null
-        var navigationLanguage = "en"
+        var navigationLanguage = "pt"
         var navigationVoiceUnits = DirectionsCriteria.IMPERIAL
         var voiceInstructionsEnabled = true
         var bannerInstructionsEnabled = true
@@ -138,7 +138,7 @@ class FlutterMapboxNavigationPlugin : FlutterPlugin, MethodCallHandler,
 
         val simulated = arguments?.get("simulateRoute") as? Boolean
         if (simulated != null) {
-            simulateRoute = simulated
+            simulateRoute =  false //simulated
         }
 
         val allowsUTurns = arguments?.get("allowsUTurnsAtWayPoints") as? Boolean

@@ -7,6 +7,9 @@ import android.content.Context
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.lifecycle.LifecycleOwner
 import com.eopeter.fluttermapboxnavigation.databinding.NavigationActivityBinding
 import com.eopeter.fluttermapboxnavigation.models.MapBoxEvents
@@ -14,6 +17,7 @@ import com.eopeter.fluttermapboxnavigation.models.MapBoxRouteProgressEvent
 import com.eopeter.fluttermapboxnavigation.models.Waypoint
 import com.eopeter.fluttermapboxnavigation.models.WaypointSet
 import com.eopeter.fluttermapboxnavigation.utilities.CustomInfoPanelEndNavButtonBinder
+import com.eopeter.fluttermapboxnavigation.utilities.CustomInfoPanelBinder
 import com.eopeter.fluttermapboxnavigation.utilities.PluginUtilities
 import com.google.gson.Gson
 import com.mapbox.maps.Style
@@ -29,10 +33,18 @@ import com.mapbox.navigation.base.route.RouterFailure
 import com.mapbox.navigation.base.route.RouterOrigin
 import com.mapbox.navigation.base.trip.model.RouteLegProgress
 import com.mapbox.navigation.base.trip.model.RouteProgress
+import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.arrival.ArrivalObserver
 import com.mapbox.navigation.core.directions.session.RoutesObserver
 import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
+import com.mapbox.navigation.core.lifecycle.MapboxNavigationObserver
 import com.mapbox.navigation.core.trip.session.*
+import com.mapbox.navigation.dropin.R
+import com.mapbox.navigation.dropin.infopanel.InfoPanelBinder
+import com.mapbox.navigation.dropin.internal.extensions.updateMargins
+import com.mapbox.navigation.ui.base.lifecycle.UIBinder
+import com.mapbox.navigation.ui.base.lifecycle.UIComponent
+import com.mapbox.navigation.ui.base.view.MapboxExtendableButton
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -145,12 +157,25 @@ open class TurnByTurn(
                         Gson().toJson(routes.map { it.directionsRoute.toJson() })
                     )
                     this@TurnByTurn.binding.navigationView.api.routeReplayEnabled(
-                        this@TurnByTurn.simulateRoute
+                        enabled = false
                     )
                     this@TurnByTurn.binding.navigationView.api.startRoutePreview(routes)
                     this@TurnByTurn.binding.navigationView.customizeViewBinders {
-                        this.infoPanelEndNavigationButtonBinder =
-                            CustomInfoPanelEndNavButtonBinder(activity)
+                        // this.infoPanelEndNavigationButtonBinder = CustomInfoPanelEndNavButtonBinder(activity)
+                        this.infoPanelBinder = CustomInfoPanelBinder()
+                    }
+                    this@TurnByTurn.binding.navigationView.customizeViewOptions {
+                        this.showManeuver= false
+                        this.showTripProgress= false
+                        this.showStartNavigationButton= false
+                        this.showEndNavigationButton= false
+                        this.isInfoPanelHideable= true
+                        this.infoPanelForcedState = 0
+                        //proprieties that i add to hide all action button
+                        //this.showToggleAudioActionButton= false
+                        //this.showToggleAudioActionButton= false
+                        //this.showActionButtons= false
+
                     }
                 }
 
@@ -214,6 +239,23 @@ open class TurnByTurn(
             return
         }
         this.binding.navigationView.api.startActiveGuidance(this.currentRoutes!!)
+        this@TurnByTurn.binding.navigationView.customizeViewBinders {
+            // this.infoPanelEndNavigationButtonBinder = CustomInfoPanelEndNavButtonBinder(activity)
+            this.infoPanelBinder = CustomInfoPanelBinder()
+        }
+        this@TurnByTurn.binding.navigationView.customizeViewOptions {
+            this.showManeuver= false
+            this.showTripProgress= false
+            this.showStartNavigationButton= false
+            this.showEndNavigationButton= false
+            this.isInfoPanelHideable= true
+            this.showTripProgress= false
+            this.infoPanelForcedState = 0
+
+            this.showToggleAudioActionButton= true
+            this.showActionButtons= true
+
+        }
         PluginUtilities.sendEvent(MapBoxEvents.NAVIGATION_RUNNING)
     }
 
@@ -235,7 +277,7 @@ open class TurnByTurn(
 
         val simulated = arguments["simulateRoute"] as? Boolean
         if (simulated != null) {
-            this.simulateRoute = simulated
+            this.simulateRoute = false //simulated
         }
 
         val language = arguments["language"] as? String
@@ -263,7 +305,7 @@ open class TurnByTurn(
         this@TurnByTurn.binding.navigationView.customizeViewOptions {
             mapStyleUriDay = this@TurnByTurn.mapStyleUrlDay
             mapStyleUriNight = this@TurnByTurn.mapStyleUrlNight
-        }           
+        }
 
         this.initialLatitude = arguments["initialLatitude"] as? Double
         this.initialLongitude = arguments["initialLongitude"] as? Double
@@ -371,8 +413,8 @@ open class TurnByTurn(
     var simulateRoute = false
     private var mapStyleUrlDay: String? = null
     private var mapStyleUrlNight: String? = null
-    private var navigationLanguage = "en"
-    private var navigationVoiceUnits = DirectionsCriteria.IMPERIAL
+    private var navigationLanguage = "pt"
+    private var navigationVoiceUnits = DirectionsCriteria.METRIC
     private var zoom = 15.0
     private var bearing = 0.0
     private var tilt = 0.0
